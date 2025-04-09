@@ -857,10 +857,20 @@ export class AzureStorage implements storage.Storage {
 
     if (process.env.EMULATED) {
       const devConnectionString = "UseDevelopmentStorage=true";
+      const _accountName = process.env.AZURE_STORAGE_ACCOUNT;
+      const _accountKey = process.env.AZURE_STORAGE_ACCESS_KEY;
 
       tableServiceClient = TableServiceClient.fromConnectionString(devConnectionString);
       tableClient = TableClient.fromConnectionString(devConnectionString, AzureStorage.TABLE_NAME);
       blobServiceClient = BlobServiceClient.fromConnectionString(devConnectionString);
+      const blobStorageCredential = new StorageSharedKeyCredential(_accountName, _accountKey);
+      blobServiceClient = new BlobServiceClient(process.env.BLOB_SERVICE_URL, blobStorageCredential, {
+        retryOptions: {
+          maxTries: 4,
+          maxRetryDelayInMs: 2000,
+          retryDelayInMs: 500,
+        },
+      });
     } else {
       if ((!accountName && !process.env.AZURE_STORAGE_ACCOUNT) || (!accountKey && !process.env.AZURE_STORAGE_ACCESS_KEY)) {
         throw new Error("Azure credentials not set");
